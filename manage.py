@@ -1,10 +1,12 @@
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
+from flask_jwt_extended import JWTManager
 from api import create_app
 from api.models import db
 
 # sets up the app
 app = create_app()
+jwt = JWTManager(app)
 
 manager = Manager(app)
 migrate = Migrate(app, db)

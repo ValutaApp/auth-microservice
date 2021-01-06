@@ -1,24 +1,14 @@
-"""
-This file holds Configuration options. The Development config looks for a creds.ini file or defaults to the normal url. 
-DockerDevConfig is used when the env variable FLASK_ENV=docker, which is currently used in Dockerfile-dev and thus,
-docker-compose. Production is used in Heroku as well as Zeit now. You may change these however you want.
-
-DO NOT HARD CODE YOUR PRODUCTION URLS EVER. Either use creds.ini or use environment variables.
-"""
 import os
 from api.core import get_pg_url
 
-# more configuration options here http://flask.pocoo.org/docs/1.0/config/
 class Config:
     """
     Base Configuration
     """
 
-    # CHANGE SECRET_KEY!! I would use sha256 to generate one and set this as an environment variable
-    # Exmaple to retrieve env variable `SECRET_KEY`: os.environ.get("SECRET_KEY")
-    SECRET_KEY = "testkey"
+    SECRET_KEY = os.environ.get("SECRET_KEY")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    LOG_FILE = "api.log"  # where logs are outputted to
+    LOG_FILE = "api.log"
 
 
 class DevelopmentConfig(Config):
@@ -29,10 +19,9 @@ class DevelopmentConfig(Config):
     cmd in the setup instructions. You can change this to environment variable as well. 
     """
 
-    url = (
-        "postgresql://testusr:password@127.0.0.1:5432/testdb"
-    )  # set the URI to call get_pg_url() once you have `creds.ini` setup
+    url = get_pg_url()
     SQLALCHEMY_DATABASE_URI = url
+    SECRET_KEY = "asdf1234"
     DEBUG = True
 
 
@@ -49,7 +38,7 @@ class ProductionConfig(Config):
 
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL"
-    )  # you may do the same as the development config but this currently gets the database URL from an env variable
+    )
     DEBUG = False
 
 

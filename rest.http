@@ -1,0 +1,26 @@
+### Index
+GET http://localhost:5000/
+
+### Create User
+POST http://localhost:5000/register
+Content-Type: application/json
+
+{
+    "name": "Edward",
+    "email": "edward@pasenidis.com",
+    "password": "testpass"
+}
+
+### Login
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+    "email": "edward@pasenidis.com",
+    "password": "testpass"
+}
+
+### Current User
+GET  http://localhost:5000/currentUser
+Content-Type: application/json
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDk5NzU5NTEsIm5iZiI6MTYwOTk3NTk1MSwianRpIjoiYzUzMjUxMzEtMGUzOS00MDU2LWE3NGUtYWQ2MTk1YzJhMjVhIiwiZXhwIjoxNjA5OTc1OTY2LCJpZGVudGl0eSI6ImVkd2FyZEBwYXNlbmlkaXMuY29tIiwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIiwidXNlcl9jbGFpbXMiOnsidXNlciI6IkVkd2FyZCIsImFkbWluIjpmYWxzZX19.yQLJdLno5MMC1jGAqwULP2_atfJ9Z5ricKOEiKynCcE

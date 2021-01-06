@@ -1,34 +1,36 @@
+from datetime import timedelta
 from flask import Blueprint, request
-from api.models import db, Person, Email
+from flask.wrappers import Response
+from flask_jwt_extended import (
+    jwt_required, create_access_token,
+    get_jwt_identity, get_jwt_claims
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import timedelta
+from api.models import db, User
 from api.core import create_response, serialize_list, logger
 from sqlalchemy import inspect
 
-main = Blueprint("main", __name__)  # initialize blueprint
+main = Blueprint("main", __name__)
 
-
-# function that is called when you visit /
 @main.route("/")
 def index():
-    # you are now in the current application context with the main.route decorator
-    # access the logger with the logger from api.core and uses the standard logging module
-    # try using ipdb here :) you can inject yourself
-    logger.info("Hello World!")
-    return "<h1>Hello World!</h1>"
+    return "<p style=\"font-size: 30px;\">Why are <span style=\"font-size: 40px; color: red;\">you</span> here?</p>"
 
 
-# function that is called when you visit /persons
-@main.route("/persons", methods=["GET"])
+@main.route("/currentUser", methods=["GET"])
+@jwt_required
 def get_persons():
-    persons = Person.query.all()
-    return create_response(data={"persons": serialize_list(persons)})
+    current_user = get_jwt_identity()
+    currnet_claims = get_jwt_claims()
+    return create_response(status=200, message={"email": current_user, "claims": currnet_claims})
 
 
-# POST request for /persons
-@main.route("/persons", methods=["POST"])
+@main.route("/register", methods=["POST"])
 def create_person():
     data = request.get_json()
 
-    logger.info("Data recieved: %s", data)
+    logger.info("Data received: %s", data)
     if "name" not in data:
         msg = "No name provided for person."
         logger.info(msg)
@@ -37,15 +39,49 @@ def create_person():
         msg = "No email provided for person."
         logger.info(msg)
         return create_response(status=422, message=msg)
+    if "password" not in data:
+        msg = "No password provided for person."
+        logger.info(msg)
+        return create_response(status=422, message=msg)
 
-    # create SQLAlchemy Objects
-    new_person = Person(name=data["name"])
-    email = Email(email=data["email"])
-    new_person.emails.append(email)
 
-    # commit it to database
-    db.session.add_all([new_person, email])
+    if db.session.query(User.id).filter_by(email=data["email"]).scalar() is not None:
+        msg = "!!!!"
+        logger.info(msg)
+        return create_response(status=422, message=msg)
+    new_user = User(name=data["name"], email=data["email"], password=generate_password_hash(data["password"]), isAdmin=False)
+
+    db.session.add(new_user)
     db.session.commit()
     return create_response(
-        message=f"Successfully created person {new_person.name} with id: {new_person._id}"
+        message=f"Successfully created person {new_user.name} with id: {new_user.id}"
     )
+
+@main.route('/login', methods=["POST"])
+def login_person():
+    data = request.get_json()
+
+
+    logger.info("Data received: %s", data)
+    if "email" not in data:
+        msg = "No email provided for person/"
+        logger.info(msg)
+        return create_response(status=422, message=msg)
+    if "password" not in data:
+        msg = "No password provided for person."
+        logger.info(msg)
+        return create_response(status=422, message=msg)
+
+    user = User.query.filter_by(email=data["email"]).first()
+
+    if user and check_password_hash(user.password, data["password"]):
+        access_token = create_access_token(
+            identity=data["email"],
+            expires_delta=timedelta(minutes=30),
+            user_claims={
+            "user": user.name, 
+            "admin": user.isAdmin 
+            })
+        return create_response(status=200, message={"token": access_token})
+
+    return create_response(status=401, message="Sorry :(")
